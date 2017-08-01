@@ -15,6 +15,8 @@ elif [ ! -f rbac.json ]; then
 	exit 1
 fi
 
+SSH_PRIV_KEY=${SSH_PUB_KEY/.pub/}
+
 client_id="$(jq '.["appId"]' rbac.json)"
 client_secret="$(jq '.["password"]' rbac.json)"
 key_data="$(cat ${SSH_PUB_KEY})"
@@ -32,7 +34,10 @@ acs-engine generate ${NAME}.json
 
 az group create --name ${NAME} --location westus
 az group deployment create --name ${NAME} --resource-group ${NAME} --template-file ./_output/${NAME}/azuredeploy.json --parameters @./_output/${NAME}/azuredeploy.parameters.json
-sleep 1m
-scp -r -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no bootstrap/* datahub@${NAME}.westus.cloudapp.azure.com:
-ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no datahub@${NAME}.westus.cloudapp.azure.com "sudo bash setup.bash ${NAME}"
-ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no datahub@${NAME}.westus.cloudapp.azure.com
+sleep 2m
+
+ssh_opts="-i ${SSH_PRIV_KEY} -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o User=datahub"
+ssh ${ssh_opts} ${NAME}.westus.cloudapp.azure.com "true"
+scp ${ssh_opts} -r bootstrap/* ${NAME}.westus.cloudapp.azure.com:
+ssh ${ssh_opts} ${NAME}.westus.cloudapp.azure.com "sudo bash setup.bash ${NAME}"
+ssh ${ssh_opts} ${NAME}.westus.cloudapp.azure.com

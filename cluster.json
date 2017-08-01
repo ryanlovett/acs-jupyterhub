@@ -12,7 +12,7 @@
     "agentPoolProfiles": [
       {
         "name": "agentpool1",
-        "count": 10,
+        "count": 2,
         "vmSize": "Standard_DS11_v2_Promo",
         "availabilityProfile": "AvailabilitySet"
       }
